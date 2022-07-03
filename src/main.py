@@ -3,25 +3,31 @@ import pandas as pd
 from loguru import logger as log
 from sediment_time_warp import *
 
-
+# If needed, change the logger level here (e.g., from DEBUG to INFO)
 log.remove()
 log.add(sys.stderr, level="DEBUG")
+
+# Define some initial parameters here. 
+# For example, if biostratigraphic data indicates that the age of oldest sediments in the core cannot exceed 245k years, set this number to 245. Similarly, set the min_age variable to the minimum age you except the core top to be. For piston core from the ocean bottom, it is a good idea to set this to 0, but if data is available, such as for example the topmost 10k years are missing, this variable can be set to start at something else than 0. 
+min_age = 0  # in kiloyears (kyrs) before present
+max_age = 245  # in kiloyears (kyrs) before present
+time_step = 5  # in kiloyears
 
 
 def main():
     data = pd.read_csv('data/core_1100.csv', usecols=['depth_m', 'd18O_pl'])    
     
     target = pd.read_csv('data/LR04stack.txt', sep='\s+', engine='python', usecols=['Time_ka', 'd18O']) 
-    target = target[target['Time_ka'] <= 245]
+    target = target[target['Time_ka'] <= max_age]
 
     test_dtw = SedimentTimeWarp(target=target, data=data, normalize=True, smooth=True, window_size=11, polynomial=3)
 
     simple_distance = test_dtw.simple_distance()    
     log.debug(f'Calculated distance: {round(simple_distance, 2)} (rounded)')
     
-    distance, target_time, min_distances = test_dtw.find_min_distance(0, 245, 10, warp_path=True)
+    distance, target_time, min_distances = test_dtw.find_min_distance(0, max_age, time_step, warp_path=True)
     log.debug(f'Found minimum distance: {round(distance, 2)} (rounded), with target time = {target_time} and minimum distance = {min_distances}')
-    log.debug(test_dtw.warping_path)
+    # log.debug(test_dtw.warping_path)
 
 
 if __name__ == "__main__":

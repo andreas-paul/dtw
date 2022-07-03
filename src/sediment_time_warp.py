@@ -161,7 +161,7 @@ class SedimentTimeWarp:
 
         distance: float = min(min_distances.values())
         target_time: list[float] = [k for k, v in min_distances.items() if v==distance]
-        print(f'Minimum distance found: ~{round(distance, 2)} at time_step_size={target_time[0]}')
+        log.debug(f'Minimum distance found: ~{round(distance, 2)} at time_step_size={target_time[0]}')
 
         if warp_path:
             self.warping_path = self.get_warping_path(self.data, self.target, target_time[0])
