@@ -1,8 +1,8 @@
-import seaborn as sns
-from sediment_time_warp import SedimentTimeWarp
+# import seaborn as sns
+# from timewarpSediments import SedimentTimeWarp
 
-class PlotTimeWarp():
+# class PlotTimeWarp():
 
-    @staticmethod
-    def plot_super():
-        sns.set(rc={'figure.figsize':(11.7,5)})
+#     @staticmethod
+#     def plot_super():
+#         sns.set(rc={'figure.figsize':(11.7,5)})
