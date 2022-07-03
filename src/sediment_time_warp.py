@@ -117,6 +117,7 @@ class SedimentTimeWarp:
                             warp_path: bool = False):
         """Find the minimum Euclidian distance(s) for a given target/data pair by stepping
         through the range of the target series given by [start_time: <time_step_size> :end_time].
+        This is basically the same as simple_distance() but with the added functionality of looping.
 
         Parameters
         ----------
@@ -154,6 +155,7 @@ class SedimentTimeWarp:
 
         min_distances: dict = {}
 
+        # TODO: Parallelize this
         for i in range(start_time, end_time, time_step_size):
             _target = self.target[self.target.iloc[:,0] <= i]
             distance = dtw.distance(self.data.iloc[:,1], _target.iloc[:,1])

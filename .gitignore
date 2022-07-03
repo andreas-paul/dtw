@@ -6,3 +6,4 @@ figures
 __pycache__
 .vscode
 *.ipynb
+.venv
