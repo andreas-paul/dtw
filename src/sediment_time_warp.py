@@ -72,9 +72,9 @@ class SedimentTimeWarp:
             # self.target.iloc[:,1] = self.smooth_time_series(self.target.iloc[:,1], window_size=window_size, polynomial=polynomial)
             self.data.iloc[:,1] = self.smooth_time_series(self.data.iloc[:,1], window_size=window_size, polynomial=polynomial)
         
-        log.info(f"Using '{self.target.columns[1]}' as target and '{self.data.columns[1]}' as data")
-        log.info(f'normalization set to {normalize}; smoothing set to {smooth}')
-        log.success("Time-warp object created successfully!")
+        log.debug(f"Using '{self.target.columns[1]}' as target and '{self.data.columns[1]}' as data")
+        log.debug(f'normalization set to {normalize}; smoothing set to {smooth}')
+        log.debug("Time-warp object created successfully!")
 
 
     @staticmethod
@@ -110,7 +110,6 @@ class SedimentTimeWarp:
         """Calculate Euclidian distance for a given target/data pair        
         """      
         distance: float = dtw.distance(self.data.iloc[:,1], self.target.iloc[:,1])
-        log.success(f'Calculated distance: {round(distance, 2)} (rounded)')
         return distance
 
 
@@ -165,6 +164,6 @@ class SedimentTimeWarp:
         print(f'Minimum distance found: ~{round(distance, 2)} at time_step_size={target_time[0]}')
 
         if warp_path:
-            self.warping_path = self.get_warping_path(data, target, target_time[0])
+            self.warping_path = self.get_warping_path(self.data, self.target, target_time[0])
 
         return distance, target_time, min_distances

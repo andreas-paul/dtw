@@ -9,21 +9,36 @@ log.add(sys.stderr, level="DEBUG")
 
 
 def main():
-    data = pd.read_csv('data/core_1100.csv', usecols=['depth_m', 'd18O_pl'])
-    log.debug("Core data loaded successfully")
-    log.debug(data.columns)
+    data = pd.read_csv('data/core_1100.csv', usecols=['depth_m', 'd18O_pl'])    
     
     target = pd.read_csv('data/LR04stack.txt', sep='\s+', engine='python', usecols=['Time_ka', 'd18O']) 
-    log.debug(target.columns)    
-    log.debug(target.head())
-    
     target = target[target['Time_ka'] <= 245]
 
-    test_dtw = SedimentTimeWarp(target=target[['Time_ka', 'd18O']], data=data[:2], normalize=True, smooth=True, window_size=11, polynomial=3)
+    test_dtw = SedimentTimeWarp(target=target, data=data, normalize=True, smooth=True, window_size=11, polynomial=3)
 
-    simple_distance = test_dtw.simple_distance()
+    simple_distance = test_dtw.simple_distance()    
+    log.debug(f'Calculated distance: {round(simple_distance, 2)} (rounded)')
     
-    
+    distance, target_time, min_distances = test_dtw.find_min_distance(0, 245, 10, warp_path=True)
+    log.debug(f'Found minimum distance: {round(distance, 2)} (rounded), with target time = {target_time} and minimum distance = {min_distances}')
+    log.debug(test_dtw.warping_path)
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     
     
@@ -62,7 +77,3 @@ def main():
     # sns.lineplot(data=target, x='Time_ka', y='Benthic_d18O_per-mil', ax=ax2, color="r", legend=True, linestyle='dashed', linewidth='0.8')
     # plt.savefig('figures/1100-vs-stack.png')
     # plt.close()
-
-
-if __name__ == "__main__":
-    main()
