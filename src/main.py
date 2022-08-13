@@ -13,11 +13,17 @@ log.add(sys.stderr, level="DEBUG")
 # Define some initial parameters here. 
 # For example, if biostratigraphic data indicates that the age of oldest sediments in the core cannot exceed 245k years, set this number to 245. Similarly, set the min_age variable to the minimum age you except the core top to be. For piston core from the ocean bottom, it is a good idea to set this to 0, but if data is available, such as for example the topmost 10k years are missing, this variable can be set to start at something else than 0. 
 min_age = 0  # in kiloyears (kyrs) before present
-max_age = 600  # in kiloyears (kyrs) before present
+max_age = 1000  # in kiloyears (kyrs) before present
 time_step = 10  # in kiloyears
 
+ref = "LR04stack.txt"
+ref_cols = ['Time_ka', 'd18O']
+name = '1150'
 
-def create_graph(min_distances):
+variables = ['depth_m', 'aragonite']
+
+
+def create_graph(min_distances, name):
 
     x = []
     y = []
@@ -31,28 +37,28 @@ def create_graph(min_distances):
     if not os.path.exists(base_path):
         os.makedirs(base_path, exist_ok=True)    
     
-    plt.savefig(os.path.join(base_path, 'dist-vs-time_smooth.png'), transparent=True)
+    plt.savefig(os.path.join(base_path, f'dist-vs-time_smooth_{name}.png'), transparent=True)
     plt.close()
 
 
 
 def main():
-    data = pd.read_csv('data/core_1100.csv', usecols=['depth_m', 'd18O_pl'])    
+    data = pd.read_csv(f'data/core_{name}.csv', usecols=variables, skip_blank_lines=True)    
     
-    target = pd.read_csv('data/LR04stack.txt', sep='\s+', engine='python', usecols=['Time_ka', 'd18O']) 
+    target = pd.read_csv(f'data/{ref}', sep='\s+', engine='python', usecols=ref_cols) 
     target = target[target['Time_ka'] <= max_age]
 
     test_dtw = SedimentTimeWarp(target=target, data=data, normalize=True, smooth=True, window_size=11, polynomial=3)
 
     simple_distance = test_dtw.simple_distance()    
-    log.debug(f'Calculated distance: {round(simple_distance, 2)} (rounded)')
+    log.debug(f'Calculated distance (simple): {round(simple_distance, 2)} (rounded)')
     
     distance, target_time, min_distances = test_dtw.find_min_distance(0, max_age, time_step, warp_path=True)
     log.debug(f'Found minimum distance: {round(distance, 2)} (rounded), with target time = {target_time} and minimum distance = {min_distances}')
     # log.debug(test_dtw.warping_path)
     
     # Create plot
-    create_graph(min_distances)
+    create_graph(min_distances, name)
 
 
 if __name__ == "__main__":
