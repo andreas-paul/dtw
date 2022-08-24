@@ -45,7 +45,7 @@ def create_graph(min_distances, name, file, distance, target_time):
             fontsize=8, color='gray', va='center', ha='left'
             )
 
-    base_path = 'figures'
+    base_path = 'out_figures'
     if not os.path.exists(base_path):
         os.makedirs(base_path, exist_ok=True)    
     

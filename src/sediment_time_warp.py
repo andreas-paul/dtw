@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from typing import Union
 from loguru import logger as log
 from scipy.stats import zscore
 from plot_time_warp import *
 from savitzky_golay import savitzky_golay
 from dtaidistance import dtw
+from dtaidistance import dtw_visualisation as dtwvis
 
 
 class SedimentTimeWarp:
@@ -109,12 +111,12 @@ class SedimentTimeWarp:
     def simple_distance(self):
         """Calculate Euclidian distance for a given target/data pair        
         """      
-        distance: float = dtw.distance(self.data.iloc[:,1], self.target.iloc[:,1])
+        distance: float = dtw.distance(self.data.iloc[:,1], self.target.iloc[:,1])                  
         return distance
 
 
-    def find_min_distance(self, start_time: Union[int, float], end_time: Union[int, float], time_step_size: Union[int, float],   
-                            warp_path: bool = False):
+    def find_min_distance(self, start_time: Union[int, float], end_time: Union[int, float], time_step_size: Union[int, float], name: str,  
+                            warp_path: bool = False, plot_warping_path: bool = False):
         """Find the minimum Euclidian distance(s) for a given target/data pair by stepping
         through the range of the target series given by [start_time: <time_step_size> :end_time].
         This is basically the same as simple_distance() but with the added functionality of looping.
@@ -166,6 +168,9 @@ class SedimentTimeWarp:
         log.debug(f'Minimum distance found: ~{round(distance, 2)} at time_step_size={target_time[0]}')
 
         if warp_path:
-            self.warping_path = self.get_warping_path(self.data, self.target, target_time[0])
-
+            self.warping_path = self.get_warping_path(self.data, self.target, target_time[0])   
+        
+        if plot_warping_path:
+            dtwvis.plot_warping(self.data.iloc[:,1], self.target.iloc[:,1], self.warping_path, Path('out_warping-paths', name))
+  
         return distance, target_time, min_distances
