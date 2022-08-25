@@ -75,7 +75,7 @@ def main():
                     os.makedirs(base_path, exist_ok=True)
                     
                 with open(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_{ref}.txt'), 'w') as f:
-                    f.write(str(dtw.warping_path)) 
+                    f.write(str(dtw.best_path)) 
                 
                 # Create plot
                 create_graph(min_distances, name, file, distance, target_time)

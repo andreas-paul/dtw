@@ -89,8 +89,9 @@ class SedimentTimeWarp:
     @staticmethod
     def get_warping_path(data, target, target_time: Union[int, float]):
         _target = target[target.iloc[:,0] <= target_time]
-        warping_path = dtw.warping_path(data.iloc[:,1], _target.iloc[:,1])
-        return warping_path
+        _, paths = dtw.warping_paths(data.iloc[:,1], _target.iloc[:,1])
+        best_path = dtw.best_path(paths)        
+        return best_path, paths
 
     @staticmethod
     def map_warping_path(warping_path, index: int):
@@ -168,9 +169,12 @@ class SedimentTimeWarp:
         log.debug(f'Minimum distance found: ~{round(distance, 2)} at time_step_size={target_time[0]}')
 
         if warp_path:
-            self.warping_path = self.get_warping_path(self.data, self.target, target_time[0])   
+            self.best_path, self.paths = self.get_warping_path(self.data, self.target, target_time[0])   
         
         if plot_warping_path:
-            dtwvis.plot_warping(self.data.iloc[:,1], self.target.iloc[:,1], self.warping_path, Path('out_warping-paths', name))
-  
+            dtwvis.plot_warping(self.data.iloc[:,1], self.target.iloc[:,1], self.best_path, Path('out_warping-paths', name))
+            dtwvis.plot_warpingpaths(self.data.iloc[:,1], self.target.iloc[:,1], self.paths, self.best_path, Path('out_warping-paths', f"_matrix_{name}") )
+            
         return distance, target_time, min_distances
+
+

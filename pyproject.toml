@@ -16,6 +16,9 @@ dtaidistance = "^2.3.9"
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.16.0"
 
+[tool.poe.tasks]
+install_seaborn = "python -m pip install seaborn"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
