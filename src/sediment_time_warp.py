@@ -173,7 +173,7 @@ class SedimentTimeWarp:
         
         if plot_warping_path:
             dtwvis.plot_warping(self.data.iloc[:,1], self.target.iloc[:,1], self.best_path, Path('out_warping-paths', name))
-            dtwvis.plot_warpingpaths(self.data.iloc[:,1], self.target.iloc[:,1], self.paths, self.best_path, Path('out_warping-paths', f"_matrix_{name}") )
+            dtwvis.plot_warpingpaths(self.data.iloc[:,1], self.target.iloc[:,1], self.paths, self.best_path, Path('out_warping-paths', f"matrix_{name}") )
             
         return distance, target_time, min_distances
 
