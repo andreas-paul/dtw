@@ -1,7 +1,10 @@
 import os
-import sys
 import ast
+import sys
+import json
+from tkinter import W
 import pandas as pd
+import numpy as np
 from loguru import logger as log
 from sediment_time_warp import *
 from plot_time_warp import create_graph
@@ -46,6 +49,38 @@ variables = ['d18O', 'aragonite']
 #     # [(0, 0), (1, 1), (2, 2), ...]
 
 
+def convert_warp_path_to_timeseries(target: list, data: list, warp_path: list):
+    new_time = list()
+    new_value = list()
+    for item in warp_path:
+        i = item[0]
+        j = item[1]
+        print(i,j)
+        new_value.append(data[i])
+        new_time.append(target[j])
+
+    frame = list(zip(new_time, new_value))    
+    dataset = pd.DataFrame(frame, columns=['value', 'time'])
+    return dataset
+
+
+with open('../out_warping-paths/dist-vs-time_core_1100_aragonite_LR04stack.txt', 'r') as f:
+    warp_path = f.readlines()
+
+warp_path = ast.literal_eval(warp_path[0])
+
+data = pd.read_csv('../data/core_1100_aragonite.csv')
+data = data['aragonite'].to_list()
+
+target = pd.read_csv('../data/LR04stack.txt', sep='\s+', engine='python', usecols=ref_cols)
+target = target['Time_ka'].to_list()
+
+dataset = convert_warp_path_to_timeseries(target, data, warp_path)
+dataset.to_csv('test.csv', index=False)
+
+dataset.plot(x='time', y='value')
+
+
 
 def main():
     
@@ -81,5 +116,5 @@ def main():
                 create_graph(min_distances, name, file, distance, target_time)
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
