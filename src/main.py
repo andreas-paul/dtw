@@ -18,7 +18,7 @@ log.add(sys.stderr, level="DEBUG")
 # For example, if biostratigraphic data indicates that the age of oldest sediments in the core cannot exceed 245k years, set this number to 245. Similarly, set the min_age variable to the minimum age you except the core top to be. For piston core from the ocean bottom, it is a good idea to set this to 0, but if data is available, such as for example the topmost 10k years are missing, this variable can be set to start at something else than 0. 
 
 min_age = 0  # in kiloyears (kyrs) before present
-max_age = 600  # in kiloyears (kyrs) before present
+max_age = 50  # in kiloyears (kyrs) before present
 time_step = 10  # in kiloyears
 
 ref = "LR04stack"
@@ -27,27 +27,6 @@ ref_cols = ['Time_ka', 'd18O']
 names = ['1100', '1150']
 variables = ['d18O', 'aragonite']
 
-# TMP
-# target = pd.read_csv(f'data/{ref}.txt', sep='\s+', engine='python', usecols=ref_cols) 
-# target = target[target['Time_ka'] <= max_age]
-# data = pd.read_csv('data/core_1100_aragonite.csv', skip_blank_lines=True)
-# with open('out_warping-paths/dist-vs-time_core_1100_aragonite_LR04stack.txt', 'r') as f:
-#     warping_path = ast.literal_eval(f.readline())
-    
-# count = 0
-# for item in warping_path:
-#     count += 1
-# print(count)
-
-
-# def map_warping_paths(warping_path, target, data) -> pd.DataFrame:
-#     """Map the warping path coming from dtaidistance package between time series
-#     """
-#     # As row indices
-#     # left: data
-#     # right: target (ref)
-#     # [(0, 0), (1, 1), (2, 2), ...]
-
 
 def convert_warp_path_to_timeseries(target: list, data: list, warp_path: list):
     new_time = list()
@@ -55,31 +34,12 @@ def convert_warp_path_to_timeseries(target: list, data: list, warp_path: list):
     for item in warp_path:
         i = item[0]
         j = item[1]
-        print(i,j)
         new_value.append(data[i])
         new_time.append(target[j])
 
     frame = list(zip(new_time, new_value))    
-    dataset = pd.DataFrame(frame, columns=['value', 'time'])
+    dataset = pd.DataFrame(frame, columns=['time', 'value'])
     return dataset
-
-
-with open('../out_warping-paths/dist-vs-time_core_1100_aragonite_LR04stack.txt', 'r') as f:
-    warp_path = f.readlines()
-
-warp_path = ast.literal_eval(warp_path[0])
-
-data = pd.read_csv('../data/core_1100_aragonite.csv')
-data = data['aragonite'].to_list()
-
-target = pd.read_csv('../data/LR04stack.txt', sep='\s+', engine='python', usecols=ref_cols)
-target = target['Time_ka'].to_list()
-
-dataset = convert_warp_path_to_timeseries(target, data, warp_path)
-dataset.to_csv('test.csv', index=False)
-
-dataset.plot(x='time', y='value')
-
 
 
 def main():
@@ -96,8 +56,8 @@ def main():
             for file in files:
                 
                 data = pd.read_csv(f'data/{file}', skip_blank_lines=True)
+
                 dtw = SedimentTimeWarp(target=target, data=data, normalize=True, smooth=True, window_size=11, polynomial=3)               
-                
                 simple_distance = dtw.simple_distance()    
                 log.debug(f'Calculated distance (simple): {round(simple_distance, 2)} (rounded)')
                 
@@ -108,13 +68,16 @@ def main():
                 base_path = 'out_warping-paths'
                 if not os.path.exists(base_path):
                     os.makedirs(base_path, exist_ok=True)
-                    
-                with open(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_{ref}.txt'), 'w') as f:
-                    f.write(str(dtw.best_path)) 
+
+                # Use best path to create
+                data_list = data.iloc[:,1].to_list()
+                target_list = target.iloc[:,0].to_list()
+                dataset = convert_warp_path_to_timeseries(target_list, data_list, dtw.best_path)                
+                dataset.to_csv(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_{ref}.txt'), index=False)
                 
                 # Create plot
                 create_graph(min_distances, name, file, distance, target_time)
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

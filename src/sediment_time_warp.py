@@ -56,25 +56,25 @@ class SedimentTimeWarp:
 
     def __init__(self, target: pd.DataFrame, data: pd.DataFrame, normalize: bool = True, smooth: bool = True, window_size: int = 11, polynomial: int = 3):
 
-        self.target: pd.DataFrame = target        
-        self.data: pd.DataFrame = data
+        self._target: pd.DataFrame = target.copy()
+        self._data: pd.DataFrame = data.copy()
 
-        if self.target.iloc[:,1].isnull().values.any():
+        if self._target.iloc[:,1].isnull().values.any():
             log.exception("Target must not contain empty rows (nan). Please remove rows first and retry.")
             raise TypeError
-        if self.data.iloc[:,1].isnull().values.any():
+        if self._data.iloc[:,1].isnull().values.any():
             log.exception("Data must not contain empty rows (nan). Please remove rows first and retry.")
             raise TypeError
 
         if normalize:
-            self.target.iloc[:,1] = zscore(self.target.iloc[:,1])
-            self.data.iloc[:,1] = zscore(self.data.iloc[:,1])
+            self._target.iloc[:,1] = zscore(self._target.iloc[:,1])
+            self._data.iloc[:,1] = zscore(self._data.iloc[:,1])
 
         if smooth:
             # self.target.iloc[:,1] = self.smooth_time_series(self.target.iloc[:,1], window_size=window_size, polynomial=polynomial)
-            self.data.iloc[:,1] = self.smooth_time_series(self.data.iloc[:,1], window_size=window_size, polynomial=polynomial)
+            self._data.iloc[:,1] = self.smooth_time_series(self._data.iloc[:,1], window_size=window_size, polynomial=polynomial)
         
-        log.debug(f"Using '{self.target.columns[1]}' as target and '{self.data.columns[1]}' as data")
+        log.debug(f"Using '{self._target.columns[1]}' as target and '{self._data.columns[1]}' as data")
         log.debug(f'normalization set to {normalize}; smoothing set to {smooth}')
         log.debug("Time-warp object created successfully!")
 
@@ -112,7 +112,7 @@ class SedimentTimeWarp:
     def simple_distance(self):
         """Calculate Euclidian distance for a given target/data pair        
         """      
-        distance: float = dtw.distance(self.data.iloc[:,1], self.target.iloc[:,1])                  
+        distance: float = dtw.distance(self._data.iloc[:,1], self._target.iloc[:,1])                  
         return distance
 
 
@@ -160,8 +160,8 @@ class SedimentTimeWarp:
 
         # TODO: Parallelize this
         for i in range(start_time, end_time, time_step_size):
-            _target = self.target[self.target.iloc[:,0] <= i]
-            distance = dtw.distance(self.data.iloc[:,1], _target.iloc[:,1])
+            _target = self._target[self._target.iloc[:,0] <= i]
+            distance = dtw.distance(self._data.iloc[:,1], _target.iloc[:,1])
             min_distances[i] = distance
 
         distance: float = min(min_distances.values())
@@ -169,11 +169,11 @@ class SedimentTimeWarp:
         log.debug(f'Minimum distance found: ~{round(distance, 2)} at time_step_size={target_time[0]}')
 
         if warp_path:
-            self.best_path, self.paths = self.get_warping_path(self.data, self.target, target_time[0])   
+            self.best_path, self.paths = self.get_warping_path(self._data, self._target, target_time[0])   
         
         if plot_warping_path:
-            dtwvis.plot_warping(self.data.iloc[:,1], self.target.iloc[:,1], self.best_path, Path('out_warping-paths', name))
-            dtwvis.plot_warpingpaths(self.data.iloc[:,1], self.target.iloc[:,1], self.paths, self.best_path, Path('out_warping-paths', f"matrix_{name}") )
+            dtwvis.plot_warping(self._data.iloc[:,1], self._target.iloc[:,1], self.best_path, Path('out_warping-paths', name))
+            dtwvis.plot_warpingpaths(self._data.iloc[:,1], self._target.iloc[:,1], self.paths, self.best_path, Path('out_warping-paths', f"matrix_{name}") )
             
         return distance, target_time, min_distances
 
