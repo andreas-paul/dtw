@@ -9,6 +9,7 @@ from loguru import logger as log
 from sediment_time_warp import *
 from plot_time_warp import create_graph
 
+# TODO: Calculate min distance 1100 w/ new age model vs 1150
 
 # If needed, change the logger level here (e.g., from DEBUG to INFO)
 log.remove()
