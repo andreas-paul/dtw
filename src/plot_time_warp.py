@@ -49,6 +49,6 @@ def create_graph(min_distances, name, file, distance, target_time):
     if not os.path.exists(base_path):
         os.makedirs(base_path, exist_ok=True)    
     
-    plt.savefig(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}.png'), transparent=False)
-    plt.savefig(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}.svg'), transparent=False)
+    plt.savefig(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_1100.png'), transparent=False)
+    plt.savefig(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_1100.svg'), transparent=False)
     plt.close()

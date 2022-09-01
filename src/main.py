@@ -19,15 +19,22 @@ log.add(sys.stderr, level="DEBUG")
 # For example, if biostratigraphic data indicates that the age of oldest sediments in the core cannot exceed 245k years, set this number to 245. Similarly, set the min_age variable to the minimum age you except the core top to be. For piston core from the ocean bottom, it is a good idea to set this to 0, but if data is available, such as for example the topmost 10k years are missing, this variable can be set to start at something else than 0. 
 
 min_age = 0  # in kiloyears (kyrs) before present
-max_age = 50  # in kiloyears (kyrs) before present
+max_age = 600 # in kiloyears (kyrs) before present
 time_step = 10  # in kiloyears
 
-ref = "LR04stack"
-ref_cols = ['Time_ka', 'd18O']
+# # 1st run
+# ref = "LR04stack"
+# ref_path = f'data/{ref}.csv'
+# ref_cols = ['time', 'd18O']
+# names = ['1100', '1150']
+# variables = ['d18O', 'aragonite']
 
-names = ['1100', '1150']
+# 2nd run
+ref = "1100"
+ref_path = f'out_warping-paths/dist-vs-time_core_{ref}_d18O_pl_LR04stack.txt'
+ref_cols = ['time', 'value']
+names = ['1150']
 variables = ['d18O', 'aragonite']
-
 
 
 def convert_warp_path_to_timeseries(target: list, data: list, warp_path: list):
@@ -47,8 +54,8 @@ def convert_warp_path_to_timeseries(target: list, data: list, warp_path: list):
 def main():
     
     # Load general target    
-    target = pd.read_csv(f'data/{ref}.txt', sep='\s+', engine='python', usecols=ref_cols) 
-    target = target[target['Time_ka'] <= max_age]
+    target = pd.read_csv(ref_path, usecols=ref_cols) 
+    target = target[target['time'] <= max_age]
     
     # Move through cores and find distance(s)
     for name in names:        
