@@ -20,7 +20,7 @@ log.add(sys.stderr, level="DEBUG")
 
 min_age = 0  # in kiloyears (kyrs) before present
 max_age = 600 # in kiloyears (kyrs) before present
-time_step = 10  # in kiloyears
+time_step = 5  # in kiloyears
 
 # # 1st run
 # ref = "LR04stack"
@@ -30,11 +30,18 @@ time_step = 10  # in kiloyears
 # variables = ['d18O', 'aragonite']
 
 # 2nd run
-ref = "1100"
-ref_path = f'out_warping-paths/dist-vs-time_core_{ref}_d18O_pl_LR04stack.txt'
-ref_cols = ['time', 'value']
-names = ['1150']
-variables = ['d18O', 'aragonite']
+# ref = "1100"
+# ref_path = f'out_warping-paths/dist-vs-time_core_{ref}_d18O_pl_LR04stack.txt'
+# ref_cols = ['time', 'value']
+# names = ['1150']
+# variables = ['d18O', 'aragonite']
+
+# # Validation
+ref = "LR04stack"
+ref_path = f'data/{ref}.csv'
+ref_cols = ['time', 'd18O']
+names = ['validate_LR04']
+variables = ['d18O']
 
 
 def convert_warp_path_to_timeseries(target: list, data: list, warp_path: list):
@@ -67,7 +74,8 @@ def main():
                 data = pd.read_csv(f'data/{file}', skip_blank_lines=True)
 
                 dtw = SedimentTimeWarp(target=target, data=data, normalize=True, smooth=True, window_size=11, polynomial=3)               
-                simple_distance = dtw.simple_distance()    
+                simple_distance = dtw.simple_distance()  
+
                 log.debug(f'Calculated distance (simple): {round(simple_distance, 2)} (rounded)')
                 
                 distance, target_time, min_distances = dtw.find_min_distance(0, max_age, time_step, 

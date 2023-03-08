@@ -12,8 +12,8 @@ def create_graph(min_distances, name, file, distance, target_time):
     for key in min_distances.keys():
         x.append(key)
         y.append(min_distances[key])
-    data_graph = pd.DataFrame({'x': x, 'y': y})
-    ax = sns.lineplot(data=data_graph, x='x', y='y')
+    data_graph = pd.DataFrame({'time': x, 'distance': y})
+    ax = sns.lineplot(data=data_graph, x='time', y='distance')
     
     ax.set_ylim(ymin=0)
     ax.set_xlim(xmin=0)
@@ -49,6 +49,8 @@ def create_graph(min_distances, name, file, distance, target_time):
     if not os.path.exists(base_path):
         os.makedirs(base_path, exist_ok=True)    
     
-    plt.savefig(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_1100.png'), transparent=False)
-    plt.savefig(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_1100.svg'), transparent=False)
+    plt.savefig(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_validate.png'), transparent=False)
+    plt.savefig(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_validate.svg'), transparent=False)
     plt.close()
+
+    data_graph.to_csv(os.path.join(base_path, f'dist-vs-time_{file.replace(".csv", "")}_validate.csv'), index=False)

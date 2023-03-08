@@ -160,9 +160,11 @@ class SedimentTimeWarp:
 
         # TODO: Parallelize this
         for i in range(start_time, end_time, time_step_size):
-            _target = self._target[self._target.iloc[:,0] <= i]
-            distance = dtw.distance(self._data.iloc[:,1], _target.iloc[:,1])
-            min_distances[i] = distance
+            if i > 0:
+                log.debug(f"End time: {i}")
+                _target = self._target[self._target.iloc[:,0] <= i]
+                distance = dtw.distance(self._data.iloc[:,1], _target.iloc[:,1])
+                min_distances[i] = distance
 
         distance: float = min(min_distances.values())
         target_time: list[float] = [k for k, v in min_distances.items() if v==distance]
