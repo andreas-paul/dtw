@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Union
+from typing import Union, List
 from loguru import logger as log
 from scipy.stats import zscore
-from plot_time_warp import *
+from plotting import *
 from savitzky_golay import savitzky_golay
 from dtaidistance import dtw
 from dtaidistance import dtw_visualisation as dtwvis
@@ -55,10 +55,17 @@ class SedimentDTW:
     """
 
     def __init__(self, target, data, normalize: bool = False, smooth: bool = False, window_size: int = 11, polynomial: int = 3):
-
+     
+        # Input validation
+        if type(target) is not pd.Series and type(target) is not list and type(target) is not np.array:
+            raise TypeError("Target is not the correct type. Allowed types: pandas.Series, list, numpy.array")
+        
+        if type(data) is not pd.Series and type(data) is not list and type(data) is not np.array:
+            raise TypeError("Target is not the correct type. Allowed types: pandas.Series, list, numpy.array")
+        
         self._target = target
         self._data = data
-
+        
         if normalize:
             self._target = zscore(self._target)
             self._data = zscore(self._data)
@@ -66,37 +73,37 @@ class SedimentDTW:
         if smooth:
             self._data = self.smooth_time_series(self._data, window_size=window_size, polynomial=polynomial)
         
-        log.debug(f'normalization set to {normalize}; smoothing set to {smooth}')
         log.debug("Time-warp object created successfully!")
 
-        @staticmethod
-        def smooth_time_series(time_series: Union[pd.Series, list, np.array], 
-                                window_size: int = 11, polynomial: int = 3):
-            """Smooth a time-series using Savitzky-Golay smoothing algorithm
-            """        
-            return savitzky_golay(time_series, window_size, polynomial)
 
-        @staticmethod
-        def get_warping_path(data, target, target_time: Union[int, float]):
-            _target = target[target.iloc[:,0] <= target_time]
-            _, paths = dtw.warping_paths(data.iloc[:,1], _target.iloc[:,1])
-            best_path = dtw.best_path(paths)        
-            return best_path, paths
+    @staticmethod
+    def smooth_time_series(time_series: Union[pd.Series, list, np.array], 
+                            window_size: int = 11, polynomial: int = 3):
+        """Smooth a time-series using Savitzky-Golay smoothing algorithm
+        """        
+        return savitzky_golay(time_series, window_size, polynomial)
 
-        @staticmethod
-        def map_warping_path(warping_path, index: int):
-            """Map the warping path to the original indices"""
-            for item in warping_path:
-                if item[0] == index:
-                    return item[1]
 
+    @staticmethod
+    def get_warping_path(data, target, target_time: Union[int, float]):
+        _target = target[target.iloc[:,0] <= target_time]
+        _, paths = dtw.warping_paths(data.iloc[:,1], _target.iloc[:,1])
+        best_path = dtw.best_path(paths)        
+        return best_path, paths
+
+
+    @staticmethod
+    def map_warping_path(warping_path, index: int):
+        """Map the warping path to the original indices"""
+        for item in warping_path:
+            if item[0] == index:
+                return item[1]
 
     def simple_distance(self):
         """Calculate Euclidian distance for a given target/data pair        
         """
         distance: float = dtw.distance(self._target, self._data)                  
         return distance
-
 
     def find_min_distance(self, start_time: Union[int, float], end_time: Union[int, float], 
                           time_step_size: Union[int, float], name: str, 

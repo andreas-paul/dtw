@@ -5,7 +5,6 @@ data
 figures
 __pycache__
 .vscode
-*.ipynb
 .venv
 out_figures/
 out_warping-paths/

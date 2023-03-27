@@ -1,0 +1,8 @@
+numpy>=1.23.2
+pandas>=1.4.3
+loguru>=0.6.0
+matplotlib>=3.5.3
+pendulum>=2.1.2
+dtaidistance>=2.3.9
+scipy>=1.10.1
+seaborn>=0.12.2
