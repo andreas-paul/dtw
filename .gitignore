@@ -8,6 +8,7 @@ __pycache__
 .venv
 out_figures/
 out_warping-paths/
+.python-version
 
 
 # Byte-compiled / optimized / DLL files

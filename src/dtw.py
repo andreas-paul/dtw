@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import multiprocessing as mp
 from typing import Union, List
 from loguru import logger as log
 from scipy.stats import zscore
@@ -104,10 +105,16 @@ class SedimentDTW:
         """
         distance: float = dtw.distance(self._target, self._data)                  
         return distance
+    
+    @staticmethod
+    def calculate_distance(time, target, data, min_distances_dict):
+        target = target[0:time]
+        distance = dtw.distance(data, target)
+        min_distances_dict[time] = distance
+
 
     def find_min_distance(self, start_time: Union[int, float], end_time: Union[int, float], 
-                          time_step_size: Union[int, float], name: str, 
-                          warp_path: bool = False, plot_warping_path: bool = False):
+                          time_step_size: Union[int, float]):
         """Find the minimum Euclidian distance(s) for a given target/data pair by stepping
         through the range of the target series given by [start_time: <time_step_size> :end_time].
         This is basically the same as simple_distance() but with the added functionality of looping.
@@ -126,9 +133,6 @@ class SedimentDTW:
             The step size used to filter the target time-series, iterating through the target from start_time to
             end_time in steps=time_step_size.
 
-        warp_path: bool
-            If true, also calculates the warping path for the age corresponding to the minimum distance found.
-
         Returns
         -------
         distance: float
@@ -146,29 +150,21 @@ class SedimentDTW:
         
         """
 
-        min_distances: dict = {}
+        times = np.arange(start=start_time, stop=end_time, step=time_step_size) 
+        manager = mp.Manager()
+        min_distances_dict = manager.dict()
+        n_cores = mp.cpu_count() - 1
+        if n_cores <= 0:
+            raise Exception("Invalid number of CPUs - exiting")
 
-        # TODO: Parallelize this
-        for i in range(start_time, end_time, time_step_size):
-            if i > 0:
-                log.debug(f"End time: {i}")
-                _target = self._target[0:i]
-                log.debug(_target)
-                distance = dtw.distance(self._data, _target)
-                min_distances[i] = distance
+        pool = mp.Pool(n_cores)
+        for time in times:
+            pool.apply_async(self.calculate_distance, args=(time, self._target, self._data, min_distances_dict))
 
-        log.info(min_distances)
-        distance: float = min(min_distances.values())
-        target_time: list[float] = [k for k, v in min_distances.items() if v==distance]
-        log.debug(f'Minimum distance found: ~{round(distance, 2)} at time_step_size={target_time[0]}')
+        pool.close()
+        pool.join()
 
-        if warp_path:
-            self.best_path, self.paths = self.get_warping_path(self._data, self._target, target_time[0])   
-        
-        if plot_warping_path:
-            dtwvis.plot_warping(self._data, self._target, self.best_path, Path('out_warping-paths', name))
-            dtwvis.plot_warpingpaths(self._data, self._target, self.paths, self.best_path, Path('out_warping-paths', f"matrix_{name}") )
-            
-        return distance, target_time, min_distances
+        distance: float = min(min_distances_dict.values())
+        time: float = [k for k, v in min_distances_dict.items() if v==distance][0]
 
-
+        return distance, time, min_distances_dict

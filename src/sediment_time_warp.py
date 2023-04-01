@@ -87,7 +87,7 @@ class SedimentTimeWarp:
         return savitzky_golay(time_series, window_size, polynomial)
 
     @staticmethod
-    def get_warping_path(data, target, target_time: Union[int, float]):
+    def get_warping_path(data, target, target_time: Union[int, float]):       
         _target = target[target.iloc[:,0] <= target_time]
         _, paths = dtw.warping_paths(data.iloc[:,1], _target.iloc[:,1])
         best_path = dtw.best_path(paths)        
@@ -161,7 +161,7 @@ class SedimentTimeWarp:
         # TODO: Parallelize this
         for i in range(start_time, end_time, time_step_size):
             if i > 0:
-                log.debug(f"End time: {i}")
+                # log.debug(f"End time: {i}")
                 _target = self._target[self._target.iloc[:,0] <= i]
                 distance = dtw.distance(self._data.iloc[:,1], _target.iloc[:,1])
                 min_distances[i] = distance
@@ -170,12 +170,12 @@ class SedimentTimeWarp:
         target_time: list[float] = [k for k, v in min_distances.items() if v==distance]
         log.debug(f'Minimum distance found: ~{round(distance, 2)} at time_step_size={target_time[0]}')
 
-        if warp_path:
-            self.best_path, self.paths = self.get_warping_path(self._data, self._target, target_time[0])   
+        # if warp_path:
+        #     self.best_path, self.paths = self.get_warping_path(self._data, self._target, target_time[0])   
         
-        if plot_warping_path:
-            dtwvis.plot_warping(self._data.iloc[:,1], self._target.iloc[:,1], self.best_path, Path('out_warping-paths', name))
-            dtwvis.plot_warpingpaths(self._data.iloc[:,1], self._target.iloc[:,1], self.paths, self.best_path, Path('out_warping-paths', f"matrix_{name}") )
+        # if plot_warping_path:
+        #     dtwvis.plot_warping(self._data.iloc[:,1], self._target.iloc[:,1], self.best_path, Path('out_warping-paths', name))
+        #     dtwvis.plot_warpingpaths(self._data.iloc[:,1], self._target.iloc[:,1], self.paths, self.best_path, Path('out_warping-paths', f"matrix_{name}") )
             
         return distance, target_time, min_distances
 
