@@ -9,6 +9,7 @@ __pycache__
 out_figures/
 out_warping-paths/
 .python-version
+out
 
 
 # Byte-compiled / optimized / DLL files

@@ -56,23 +56,37 @@ class SedimentDTW:
     """
 
     def __init__(self, target, data, normalize: bool = False, smooth: bool = False, window_size: int = 11, polynomial: int = 3):
+
+        if type(target) is not pd.DataFrame:
+            raise TypeError("Target is not the correct type. Allowed type: pandas.DataFrame")
+        
+        if type(data) is not pd.DataFrame:
+            raise TypeError("Data is not the correct type. Allowed type: pandas.DataFrame")
      
-        # Input validation
-        if type(target) is not pd.Series and type(target) is not list and type(target) is not np.array:
-            raise TypeError("Target is not the correct type. Allowed types: pandas.Series, list, numpy.array")
+        # # Input validation
+        # if type(target) is not pd.Series and type(target) is not list and type(target) is not np.array:
+        #     raise TypeError("Target is not the correct type. Allowed types: pandas.Series, list, numpy.array")
         
-        if type(data) is not pd.Series and type(data) is not list and type(data) is not np.array:
-            raise TypeError("Target is not the correct type. Allowed types: pandas.Series, list, numpy.array")
+        # if type(data) is not pd.Series and type(data) is not list and type(data) is not np.array:
+        #     raise TypeError("Target is not the correct type. Allowed types: pandas.Series, list, numpy.array")
         
-        self._target = target
-        self._data = data
+        self._target = target.copy()
+        self._data = data.copy()
+
+        if self._target.iloc[:,1].isnull().values.any():
+            log.exception("Target must not contain empty rows (nan). Please remove rows first and retry.")
+            raise TypeError
+        
+        if self._data.iloc[:,1].isnull().values.any():
+            log.exception("Data must not contain empty rows (nan). Please remove rows first and retry.")
+            raise TypeError
         
         if normalize:
-            self._target = zscore(self._target)
-            self._data = zscore(self._data)
+            self._target.iloc[:,1] = zscore(self._target.iloc[:,1])
+            self._data.iloc[:,1] = zscore(self._data.iloc[:,1])
 
         if smooth:
-            self._data = self.smooth_time_series(self._data, window_size=window_size, polynomial=polynomial)
+            self._data.iloc[:,1] = self.smooth_time_series(self._data.iloc[:,1], window_size=window_size, polynomial=polynomial)
         
         log.debug("Time-warp object created successfully!")
 
@@ -86,11 +100,12 @@ class SedimentDTW:
 
 
     @staticmethod
-    def get_warping_path(data, target, target_time: Union[int, float]):
+    def get_warping_path(data, target, target_time: Union[int, float]):       
         _target = target[target.iloc[:,0] <= target_time]
-        _, paths = dtw.warping_paths(data.iloc[:,1], _target.iloc[:,1])
+        _distance, paths = dtw.warping_paths(data.iloc[:,1], _target.iloc[:,1])
         best_path = dtw.best_path(paths)        
-        return best_path, paths
+        return best_path, paths, _distance
+
 
 
     @staticmethod
@@ -103,20 +118,26 @@ class SedimentDTW:
     def simple_distance(self):
         """Calculate Euclidian distance for a given target/data pair        
         """
-        distance: float = dtw.distance(self._target, self._data)                  
+        distance: float = dtw.distance(self._data.iloc[:,1], self._target.iloc[:,1])                  
         return distance
     
     @staticmethod
+    def convert_dictproxy_to_dict(dict_proxy_dict):
+        import json
+        return json.dumps(dict_proxy_dict.copy())
+    
+
+    @staticmethod
     def calculate_distance(time, target, data, min_distances_dict):
-        target = target[0:time]
-        distance = dtw.distance(data, target)
-        min_distances_dict[time] = distance
+        _target = target[target.iloc[:,0] <= time]
+        distance = dtw.distance(data.iloc[:,1], _target.iloc[:,1])
+        min_distances_dict[int(time)] = distance
 
 
     def find_min_distance(self, start_time: Union[int, float], end_time: Union[int, float], 
-                          time_step_size: Union[int, float]):
+                          time_step_size: Union[int, float], warp_path: bool = False):
         """Find the minimum Euclidian distance(s) for a given target/data pair by stepping
-        through the range of the target series given by [start_time: <time_step_size> :end_time].
+        through the range of the target series given by [start_time: <time_step_size> :end_time]. 
         This is basically the same as simple_distance() but with the added functionality of looping.
 
         Parameters
@@ -158,7 +179,7 @@ class SedimentDTW:
             raise Exception("Invalid number of CPUs - exiting")
 
         pool = mp.Pool(n_cores)
-        for time in times:
+        for time in times:           
             pool.apply_async(self.calculate_distance, args=(time, self._target, self._data, min_distances_dict))
 
         pool.close()
@@ -166,5 +187,10 @@ class SedimentDTW:
 
         distance: float = min(min_distances_dict.values())
         time: float = [k for k, v in min_distances_dict.items() if v==distance][0]
+
+        if warp_path:
+            self.best_path, self.paths, _distance = self.get_warping_path(self._data, self._target, time)  
+            if distance != _distance:
+                raise ValueError(f"Distances between iterative best curve and best path not equal: {distance} vs {_distance}")
 
         return distance, time, min_distances_dict

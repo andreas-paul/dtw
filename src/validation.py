@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from loguru import logger as log
-from dtw import SedimentDTW
+from src.sediment_dtw import SedimentDTW
 from plot_time_warp import create_graph
 
 from dtaidistance import dtw
