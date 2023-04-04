@@ -190,6 +190,7 @@ class SedimentDTW:
 
         if warp_path:
             self.best_path, self.paths, _distance = self.get_warping_path(self._data, self._target, time)  
+            log.debug(f"{distance}, {_distance}")
             if distance != _distance:
                 raise ValueError(f"Distances between iterative best curve and best path not equal: {distance} vs {_distance}")
 
