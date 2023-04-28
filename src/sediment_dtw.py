@@ -89,8 +89,8 @@ class SedimentDTW:
             self._data.iloc[:,1] = self.smooth_time_series(self._data.iloc[:,1], window_size=window_size, polynomial=polynomial)
         
         log.debug("Time-warp object created successfully!")
-
-
+        
+    
     @staticmethod
     def smooth_time_series(time_series: Union[pd.Series, list, np.array], 
                             window_size: int = 11, polynomial: int = 3):
@@ -98,7 +98,7 @@ class SedimentDTW:
         """        
         return savitzky_golay(time_series, window_size, polynomial)
 
-
+    
     @staticmethod
     def get_warping_path(data, target, target_time: Union[int, float]):       
         _target = target[target.iloc[:,0] <= target_time]
@@ -106,8 +106,7 @@ class SedimentDTW:
         best_path = dtw.best_path(paths)        
         return best_path, paths, _distance
 
-
-
+    
     @staticmethod
     def map_warping_path(warping_path, index: int):
         """Map the warping path to the original indices"""
@@ -115,18 +114,20 @@ class SedimentDTW:
             if item[0] == index:
                 return item[1]
 
+    
     def simple_distance(self):
         """Calculate Euclidian distance for a given target/data pair        
         """
         distance: float = dtw.distance(self._data.iloc[:,1], self._target.iloc[:,1])                  
         return distance
     
+    
     @staticmethod
     def convert_dictproxy_to_dict(dict_proxy_dict):
         import json
         return json.dumps(dict_proxy_dict.copy())
     
-
+    
     @staticmethod
     def calculate_distance(time, target, data, min_distances_dict):
         _target = target[target.iloc[:,0] <= time]
